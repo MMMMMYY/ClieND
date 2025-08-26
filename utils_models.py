@@ -86,50 +86,7 @@ class SubnetConv(nn.Conv2d):
 #                 module.set_k(new_k)
 
 
-# class SimpleCNN(nn.Module):
-#     def __init__(self, conv_layers_config, fc_layers_config, img_dim=32):
-#         super(SimpleCNN, self).__init__()
-#         self.conv_layers = nn.ModuleList()
-#         for layer_cfg in conv_layers_config:
-#             self.conv_layers.append(SubnetConv(**layer_cfg))
-#
-#         # 计算第一个全连接层的in_features
-#         conv_output_dim = img_dim // 4  # 假设有2个MaxPool层，stride为2
-#         fc_layers_config = [
-#             {
-#                 "in_features": conv_output_dim * conv_output_dim * conv_layers_config[-1]["out_channels"]
-#                 if cfg["in_features"] == "computed" else cfg["in_features"],
-#                 "out_features": cfg["out_features"]
-#             }
-#             for cfg in fc_layers_config
-#         ]
-#
-#         self.fc_layers = nn.ModuleList()
-#         for layer_cfg in fc_layers_config:
-#             self.fc_layers.append(SubnetLinear(**layer_cfg))
-#
-#     def forward(self, x):
-#         for conv_layer in self.conv_layers:
-#             x = torch.relu(conv_layer(x))
-#             x = torch.max_pool2d(x, 2)
-#
-#         x = x.view(x.size(0), -1)
-#
-#         for fc_layer in self.fc_layers[:-1]:
-#             x = torch.relu(fc_layer(x))
-#         x = self.fc_layers[-1](x)
-#
-#         return x
-#
-#     def set_conv_k(self, new_k):
-#         for module in self.conv_layers:
-#             if hasattr(module, "set_k"):
-#                 module.set_k(new_k)
-#
-#     def set_lin_k(self, new_k):
-#         for module in self.fc_layers:
-#             if hasattr(module, "set_k"):
-#                 module.set_k(new_k)
+
 
 class TexasFullyConnectedNN(nn.Module):
     def __init__(self, input_dim=6169, hidden_dims=[128, 64], output_dim=100):
@@ -241,8 +198,8 @@ class Net(nn.Module):
         for layer_cfg in conv_layers_config:
             self.conv_layers.append(SubnetConv(**layer_cfg))
 
-        # 计算第一个全连接层的in_features
-        conv_output_dim = img_dim // 4  # 假设有2个MaxPool层，stride为2
+       
+        conv_output_dim = img_dim // 4  
         fc_layers_config = [
             {
                 "in_features": conv_output_dim * conv_output_dim * conv_layers_config[-1]["out_channels"]
@@ -309,90 +266,32 @@ class UnifiedFullyConnectedNN(nn.Module):
 
 
 
-# class Net(nn.Module):
-#     def __init__(self, conv_layers_config, fc_layers_config, img_dim=32):
-#         super(Net, self).__init__()
-#         self.conv_layers = nn.ModuleList()
-#         for layer_cfg in conv_layers_config:
-#             self.conv_layers.append(SubnetConv(**layer_cfg))
-#
-#         # 手动设置第一个全连接层的in_features
-#         fc_layers_config[0]['in_features'] = 400  # 根据调试结果修正为400
-#
-#         self.fc_layers = nn.ModuleList()
-#         for layer_cfg in fc_layers_config:
-#             self.fc_layers.append(SubnetLinear(**layer_cfg))
-#
-#     def forward(self, x):
-#         # print(f"Input shape: {x.shape}")  # 调试输出
-#
-#         for conv_layer in self.conv_layers:
-#             x = torch.relu(conv_layer(x))
-#             x = torch.max_pool2d(x, 2)
-#             # print(f"After conv and pool: {x.shape}")  # 调试输出
-#
-#         x = x.view(x.size(0), -1)
-#         # print(f"After flatten: {x.shape}")  # 调试输出
-#
-#         for fc_layer in self.fc_layers[:-1]:
-#             x = torch.relu(fc_layer(x))
-#             # print(f"After fc_layer: {x.shape}")  # 调试输出
-#         x = self.fc_layers[-1](x)
-#
-#         return x
-#
-#     def set_conv_k(self, new_k):
-#         for module in self.conv_layers:
-#             if hasattr(module, "set_k"):
-#                 module.set_k(new_k)
-#
-#     def set_lin_k(self, new_k):
-#         for module in self.fc_layers:
-#             if hasattr(module, "set_k"):
-#                 module.set_k(new_k)
+
 
 
 def apply_min_activation_attack(x, dropout_rate=0.5):
-    """
-    对输入 x 应用最大激活攻击，随机丢弃激活值最高的神经元。
-    :param x: 输入张量
-    :param dropout_rate: 丢弃的神经元比例，介于 0 和 1 之间
-    :return: 经过最大激活攻击后的张量
-    """
+   
     if dropout_rate > 0 and dropout_rate < 1:
-        # 计算每个神经元的平均激活值
+       
         activations = torch.mean(x, dim=0)
 
-        # 找到激活值的分位数阈值
         threshold = torch.quantile(activations, 1 - dropout_rate)
 
-        # 生成一个掩码，只保留激活值低于阈值的神经元
         mask = activations <= threshold
 
-        # 应用掩码，将不符合条件的神经元置零
         x = x * mask.float()
 
     return x
 
 def apply_sample_dropping_attack(x, dropout_rate=0.5):
-    """
-    对输入 x 应用样本丢弃攻击，随机丢弃部分样本。
-    :param x: 输入张量
-    :param dropout_rate: 丢弃的样本比例，介于 0 和 1 之间
-    :return: 经过样本丢弃攻击后的张量
-    """
+
     if dropout_rate > 0 and dropout_rate < 1:
         mask = torch.rand(x.size(0)) > dropout_rate
         x = x[mask]
     return x
 
 def apply_neuron_separation_attack(x, separation_factor=2.0):
-    """
-    对输入 x 应用神经元分离攻击，增强激活值之间的差异。
-    :param x: 输入张量
-    :param separation_factor: 分离因子，控制激活值的差异程度
-    :return: 经过神经元分离攻击后的张量
-    """
+
     mean_activation = torch.mean(x, dim=0)
     x = x * (mean_activation * separation_factor)
     return x
