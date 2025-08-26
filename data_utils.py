@@ -20,7 +20,7 @@ import numpy as np
 #     client_datasets = []
 #     for i in range(num_clients):
 #         alpha = q * label_distribution / sum(label_distribution)
-#         alpha[alpha <= 0] = 1e-3  # 平滑因子，确保 alpha 没有小于或等于0的值
+#         alpha[alpha <= 0] = 1e-3  
 #         proportions = np.random.dirichlet(alpha + 1e-3)
 #
 #         print(f"Proportions for client {i}: {proportions}")
@@ -208,19 +208,18 @@ def load_enron_email_data(data_dir, batch_size):
 
 
 def load_enron_dataset(data_dir):
-    # 提取路径字符串
     data_dir = data_dir['data_dir']
 
     emails = []
     labels = []
 
-    # print(f"Starting traversal in: {data_dir}")  # 打印出路径以确保它指向正确的目录
+    # print(f"Starting traversal in: {data_dir}")  
 
     for root, dirs, files in os.walk(data_dir):
-        # print(f"Current directory: {root}")  # 打印当前遍历的目录
+        # print(f"Current directory: {root}")  
         for file in files:
-            # print(f"Found file: {file}")  # 打印找到的文件名
-            if file.endswith("."):  # 根据实际文件类型修改条件
+            # print(f"Found file: {file}")  
+            if file.endswith("."):  
                 label = os.path.basename(root)
                 file_path = os.path.join(root, file)
 
@@ -271,7 +270,7 @@ class EnronEmailDataset(Dataset):
     def __init__(self, features, labels):
         self.features = torch.tensor(features, dtype=torch.float32)
         self.labels = torch.tensor(labels, dtype=torch.long)
-        # self.targets = self.labels  # 将 targets 设置为类的属性
+        # self.targets = self.labels 
 
     def __len__(self):
         return len(self.labels)
