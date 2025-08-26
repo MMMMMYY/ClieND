@@ -9,7 +9,7 @@ Artifacts are shared **for availability only** (code and scripts are included).
 
 ## Quick Start
 ```bash
-# 1) (Optional) create env and install deps
+# 1) create env and install deps
 #    Python ≥3.10, PyTorch ≥2.1 recommended
 #    pip install torch torchvision pandas
 
