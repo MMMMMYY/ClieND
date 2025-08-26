@@ -1,6 +1,5 @@
 
 This repository provides the artifacts for our ASIACCS 2026 submission.  
-Artifacts are shared **for availability only** (code and scripts are included).
 
 ## Contents
 - `config.json` — Experiment configuration (datasets, model, FL/attack settings).
