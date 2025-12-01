@@ -4,7 +4,7 @@ This repository provides the artifacts for our ASIACCS 2026 submission.
 ## Contents
 - `config.json` — Experiment configuration (datasets, model, FL/attack settings).
 - `utils_models.py`, `data_utils.py`, `attacks.py`, `training.py`, `utils_file.py` — Model, data loading, attack, training, and I/O utilities.
-- `main.py` (or your entry script) — Federated training with optional attacks; logs and results are saved under `results/`.
+- `main.py` — Federated training with optional attacks; logs and results are saved under `results/`.
 - `aggregatio.py` - Include the server defense, such as FLTrust, FreqFed, CrowdGuard, FLSheld, Flame, and FedDefender.
 
 ## Quick Start
