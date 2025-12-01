@@ -9,6 +9,7 @@ from training import *
 from utils_file import *
 import torch.optim as optim
 import sys
+import time
 
 # Check if a GPU is available and set the device
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
@@ -46,12 +47,12 @@ if attack_start_epoch != 200:
 else:
     file_suffix = f"{model_choice}_{attack_type}_attack-{attack_enabled}_{num_malicious}_attackers"
 
-if not os.path.exists(f'results/{file_suffix}'):
-    os.makedirs(f'results/{file_suffix}')
-log_file = open(f"results/{file_suffix}/training_log.log", "w")
-error_log_file = open(f"results/{file_suffix}/error_log.log", "w")
-sys.stdout = log_file
-sys.stderr = error_log_file
+# if not os.path.exists(f'results/{file_suffix}'):
+#     os.makedirs(f'results/{file_suffix}')
+# log_file = open(f"results/{file_suffix}/training_log.log", "w")
+# error_log_file = open(f"results/{file_suffix}/error_log.log", "w")
+# sys.stdout = log_file
+# sys.stderr = error_log_file
 
 print(f"Attack configuration: {attack_config}")
 
@@ -95,6 +96,8 @@ elif model_choice == "Net":
     global_model = Net(conv_layers_config, fc_layers_config).to(device)
 elif model_choice == "UnifiedFullyConnectedNN_texas":
     global_model = TexasFullyConnectedNN().to(device)
+elif model_choice == "ResNet50_ImageNet":
+    global_model = resnet().to(device)
 
 
 criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -105,6 +108,7 @@ client_scores_dict = {}
 client_weights_dict = {}
 client_accuracies_dict = {}
 
+
 for i in range(num_clients):
     if model_choice == "SimpleCNN_cifar10":
         base_model = SimpleCNN_cifar10().to(device)
@@ -114,6 +118,8 @@ for i in range(num_clients):
         base_model = Net(conv_layers_config, fc_layers_config).to(device)
     elif model_choice == "UnifiedFullyConnectedNN_texas":
         base_model = TexasFullyConnectedNN().to(device)
+    elif model_choice == "ResNet50_ImageNet":
+        base_model = resnet().to(device)
     if i < num_malicious and attack_type in ['min_activation', 'sample_dropping', 'neuron_separation']:  # Malicious clients
         model = AttackedModel(base_model, attack_type=attack_type,
                               dropout_rate=dropout_rate,
@@ -133,12 +139,12 @@ optimizers = [torch.optim.SGD(local_models[i].parameters(), lr=learning_rate) fo
 server_scores = []
 server_weights = []
 server_accuracies = []
-
+start_time = time.perf_counter()
 # Training loop
 for epoch in range(epochs):
     trained_local_models = []
     local_grads = []
-
+    # print_gpu_usage()
     # Train local models
     for i in range(num_clients):
         local_models[i].load_state_dict(global_model.state_dict())
@@ -147,7 +153,8 @@ for epoch in range(epochs):
             if attack_enabled and epoch >= attack_start_epoch:
                 print(f"Client {i} is malicious!")
                 if attack_type in ["min-max", "fang"]:
-                    trained_local_model = train(local_models[i], train_loaders[i], criterion, optimizers[i], epochs=1, device=device)
+
+                    trained_local_model = training(local_models[i], train_loaders[i], criterion, optimizers[i], epochs=1, device=device)
 
                     # Extract gradients
                     grads = []
@@ -204,25 +211,35 @@ for epoch in range(epochs):
                     # trained_local_models.train_model(local_models[i], poisoned_samples, poisoned_labels, optimizers[i], criterion)
 
             else:  # Before attack start or honest clients
+                # print(epochs)
                 trained_local_models.append(
-                    train(local_models[i], train_loaders[i], criterion, optimizers[i], epochs=1, device=device))
+                    training(local_models[i], train_loaders[i], criterion, optimizers[i], epochs=1, device=device))
         else:  # Honest clients
             trained_local_models.append(
-                train(local_models[i], train_loaders[i], criterion, optimizers[i], epochs=1, device=device))
+                training(local_models[i], train_loaders[i], criterion, optimizers[i], epochs=1, device=device))
+        # print_gpu_usage()
+        end_time_1 = time.perf_counter()
         # Record client scores, weights, and accuracies
         client_scores_dict[i].append(return_score(local_models[i]))
         # client_weights_dict[i].append(return_weight(local_models[i]))
-        client_accuracy = test(local_models[i], test_loader, device=device)
+        client_accuracy = testing(local_models[i], test_loader, device=device)
         client_accuracies_dict[i].append(client_accuracy)
+        # print_gpu_usage()
 
     # Record server scores, weights, and accuracy
     server_scores.append(return_score(global_model))
     # server_weights.append(return_weight(global_model))
-    global_accuracy = test(global_model, test_loader, device=device)
+    global_accuracy = testing(global_model, test_loader, device=device)
     server_accuracies.append(global_accuracy)
+    end_time_2 = time.perf_counter()
 
     # Aggregate models
     global_model = average_models(global_model, trained_local_models)
+    end_time_3 = time.perf_counter()
+    time = end_time_2 - start_time
+    time2= end_time_3 - end_time_2 +end_time_1 - start_time
+    print(f"Epoch {epoch + 1} time: {time:.2f} seconds")
+    print(f"Epoch {epoch + 1} training time (excluding cliend): {time2:.2f} seconds")
 
     print(
         f'Epoch {epoch + 1} complete! Client Accuracies: {[f"{acc[-1]:.2f}%" for acc in client_accuracies_dict.values()]} | Global Accuracy: {global_accuracy:.2f}%')
