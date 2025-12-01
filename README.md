@@ -8,15 +8,26 @@ This repository provides the artifacts for our ASIACCS 2026 submission.
 - `aggregatio.py` - Include the server defense, such as FLTrust, FreqFed, CrowdGuard, FLSheld, Flame, and FedDefender.
 
 ## Quick Start
-```bash
-# 1) create env and install deps
-#    Python ≥3.10, PyTorch ≥2.1 recommended
-#    pip install torch torchvision pandas
 
-# 2) Edit config.json to choose dataset/model and attack settings
+# 1) Create Environment and Install Dependencies
+
+Recommended: Python ≥3.10, PyTorch ≥2.1.
+
+```bash
+pip install torch torchvision pandas
+```
+
+# 2) Edit Configuration
+
+Edit `config.json` to choose the dataset, model, and attack settings.
 
 # 3) Run
-python main.py - All the training details will be saved.
+
+```bash
+python main.py
+```
+
+All the training details will be saved.
 
 # 4) Result Saving
 
@@ -25,14 +36,14 @@ The experimental results are automatically saved in the `results/{file_suffix}/`
 The following CSV files are generated:
 
 * **Client Metrics**:
-    * `client_{client_id}_scores.csv`: Contains the detailed scoring metrics for each individual client.
-    * `client_{client_id}_weights.csv`: Stores the local model weights for each client.
-    * `client_{client_id}_accuracies.csv`: Records the local accuracy history for each client over the training rounds.
+  * `client_{client_id}_scores.csv`: Contains the detailed scoring metrics for each individual client.
+  * `client_{client_id}_weights.csv`: Stores the local model weights for each client.
+  * `client_{client_id}_accuracies.csv`: Records the local accuracy history for each client over the training rounds.
 
 * **Server Metrics**:
-    * `server_scores.csv`: Logs the aggregated scores tracked by the central server.
-    * `server_weights.csv`: Saves the aggregated global model weights.
-    * `server_accuracies.csv`: Records the global model's accuracy history (aggregated performance) throughout the training process.
+  * `server_scores.csv`: Logs the aggregated scores tracked by the central server.
+  * `server_weights.csv`: Saves the aggregated global model weights.
+  * `server_accuracies.csv`: Records the global model's accuracy history (aggregated performance) throughout the training process.
 
 # 5) ClieND
 
@@ -40,3 +51,4 @@ Run `cliend.py` to execute the whole process of client detection and mitigation.
 
 ```bash
 python cliend.py
+```
