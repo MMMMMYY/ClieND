@@ -60,22 +60,20 @@ def our_attack_dist(all_updates, model_re, n_attackers, dev_type='unit_vec'):
 
 
 def generate_malicious_update(local_model, global_model, local_grads, n_attackers, dev_type='unit_vec'):
-    # 确保 local_grads 中的所有张量都在同一个设备上
-    device = next(local_model.parameters()).device  # 获取模型所在的设备
+    device = next(local_model.parameters()).device  
 
-    # 将 local_grads 中的张量移动到相同的设备
     local_grads_tensor = torch.stack([grad.to(device) for grad in local_grads])
 
-    # 计算梯度的平均值
+
     agg_grads = torch.mean(local_grads_tensor, 0)
 
-    # 生成恶意更新
+
     malicious_update = our_attack_dist(local_grads_tensor, agg_grads, n_attackers, dev_type)
 
-    # 将恶意更新应用到模型参数
+
     with torch.no_grad():
         for param, mal_update in zip(local_model.parameters(), malicious_update):
-            mal_update = mal_update.to(device)  # 确保 mal_update 在与 param 相同的设备上
+            mal_update = mal_update.to(device) 
             param.copy_(param - mal_update)
 
     return local_model
